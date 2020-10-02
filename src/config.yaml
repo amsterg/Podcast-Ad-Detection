@@ -1,0 +1,47 @@
+#PATHS
+
+RAW_DATA_DIR : 'data/raw/'
+PROC_DATA_DIR : 'data/processed/'
+INTERIM_DATA_DIR : 'data/interim/'
+MODEL_SAVE_DIR : 'models/'
+VIS_PREDS_DIR : 'data/vis/'
+CMP_FMT : '.tar.bz2'
+RUNS_DIR : 'runs/'
+
+
+PODS_DIR : 'data/raw/pods'
+PODS_TRAIN_DIR : 'data/interim/pods_train'
+PODS_VAL_DIR : 'data/interim/pods_val'
+PODS_TEST_DIR : 'data/interim/pods_test'
+PODS_DATA_INFO : 'data/tagged_podcasts.json'
+
+ADS_DIR : 'data/raw//ads'
+NON_ADS_DIR : 'data/raw/non_ads'
+
+PODS_READ_FORMAT_PODS : '.mp3'
+AUDIO_READ_FORMAT_PODS : '.wav'
+AUDIO_WRITE_FORMAT_PODS : '.wav'
+
+AUDIO_READ_FORMAT_TIMIT : '.WAV'
+VAD_MODE : 3
+
+AUDIO_WRITE_FORMAT : '.wav'
+SAMPLING_RATE : 16000 #Hz
+WINDOW_SIZE : 48 #ms
+WINDOW_STEP : 12 #ms
+MEL_CHANNELS : 40
+SMOOTHING_WSIZE : 10
+SMOOTHING_LENGTH : 3
+DBFS : -30
+HIDDEN_SIZE : 256 #128
+EMBEDDING_SIZE : 256
+PROJECTION_SIZE : 64
+NUM_LAYERS : 3
+# SLIDING_WIN_SIZE : 64 # frames # use 64 for 1dconv and 160 for lstm
+SLIDING_WIN_SIZE : 251 #calssification
+SLIDING_WIN_OVERLAP : 0.5
+UTTR_COUNT : 5
+ACC_COUNT : 4
+# BATCH_SIZE : 20 # 4 accents total 8x4=32 tensors
+BATCH_SIZE : 64
+VAL_LOSS_COUNT : 100
