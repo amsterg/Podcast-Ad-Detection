@@ -89,7 +89,6 @@ target/
 .mypy_cache/
 
 
-data/
 
 models_/
 
