@@ -58,70 +58,6 @@ ADS_OUT_FILE_TRAIN = os.path.join(
 dirs_ = set([globals()[d] for d in globals() if d.__contains__('DIR')])
 
 
-def preprocess_GMU():
-    """
-    Summary:
-
-    Args:
-
-    Returns:
-
-    """
-    speakers_info = pd.read_csv(GMU_DATA_INFO)
-    categories = Counter(
-        speakers_info['native_language']).most_common(GMU_ACCENT_COUNT)
-    categories = [c[0] for c in categories]
-    speakers_info = speakers_info[speakers_info['native_language'].isin(
-        categories)]
-    speakers_info = speakers_info[['filename', 'native_language']]
-    speakers_info['name'] = speakers_info['filename']
-    speakers_info['filename'] = speakers_info['filename'].apply(
-        lambda fname: os.path.join(GMU_DATA, fname + AUDIO_READ_FORMAT_GMU))
-
-    count = -15
-
-    shuffle_ixs = list(range(len(speakers_info['filename'].tolist())))
-    shuffle(shuffle_ixs)
-    fnames = np.array(
-        speakers_info['filename'].tolist())[shuffle_ixs][count:].tolist()
-    langs = np.array(speakers_info['native_language'].tolist()
-                     )[shuffle_ixs][count:].tolist()
-    names = np.array(
-        speakers_info['name'].tolist())[shuffle_ixs][count:].tolist()
-    train_names = sample(names, int(0.8 * len(names)))
-    val_names = set(names) - set(train_names)
-
-    mels_train = {lang: [] for lang in langs}
-    mels_val = {lang: [] for lang in langs}
-
-    for name, fname, lang in tqdm(zip(names, fnames, langs),
-                                  total=len(langs),
-                                  bar_format="{l_bar}%s{bar}%s{r_bar}" %
-                                  (Fore.GREEN, Fore.RESET)):
-        try:
-            aud = preprocess(fname)
-
-        except AssertionError as e:
-            print("Couldn't process ", len(aud), fname)
-            continue
-        # file_out_ = fname.split('.')[0].replace(
-        #     RAW_DATA_DIR, INTERIM_DATA_DIR) + '_' + AUDIO_WRITE_FORMAT
-
-        # soundfile.write(file_out_, aud, SAMPLING_RATE)
-
-        mel = mel_spectogram(aud)
-        if mel.shape[1] <= config['SLIDING_WIN_SIZE']:
-            print("Couldn't process ", mel.shape, fname)
-            continue
-
-        if name in val_names:
-            mels_val[lang].append((name, mel))
-        else:
-            mels_train[lang].append((name, mel))
-
-    write_hdf5(GMU_PROC_OUT_FILE_T, mels_train)
-    write_hdf5(GMU_PROC_OUT_FILE_VAL, mels_val)
-
 
 def preprocess_TIMIT(data_root, out_file):
     """
@@ -168,7 +104,6 @@ def preprocess_TIMIT(data_root, out_file):
         #     RAW_DATA_DIR, INTERIM_DATA_DIR) + '_' + AUDIO_WRITE_FORMAT
         # os.makedirs('/'.join(file_out_.split('/')[:-1]), exist_ok=True)
         # soundfile.write(file_out_, aud, config['SAMPLING_RATE'])
-        # exit()
 
         mel = mel_spectogram(aud)
         if mel.shape[1] <= config['SLIDING_WIN_SIZE']:
@@ -268,13 +203,7 @@ def extract_ads(pod_file, create_ads=False, create_non_ads=False):
     with open(pod_file, 'r') as f:
         podcasts_json = json.load(f)
 
-    # for podcast in tqdm(podcasts_json[:]):
-    #     podcast['fname'] = wget.filename_from_url(podcast['content_url'])
 
-    #     if podcast['fname'] != '1d487152-4fc1-49c3-8258-3442b48267ff.mp3':
-    #         continue
-    #     extract_ad(podcast)
-    # exit()
     proc_args = {
         'pod_file': podcasts_json,
         'create_ads': create_ads,
@@ -447,49 +376,15 @@ def preprocess_pods(data_root, out_file):
         for s in os.listdir(data_root)
         if s.__contains__(config['AUDIO_READ_FORMAT_PODS'])
     ]
-    print(aud_files)
-    exit()
-
-    count = 0
-    shuffle_ixs = list(range(len(aud_files)))
-    shuffle(shuffle_ixs)
-    aud_files = np.array(aud_files)[shuffle_ixs][:].tolist()
-
-    # mels = {c: [] for c in categories}
-
-    for aud_fname in tqdm(aud_files,
-                          bar_format="{l_bar}%s{bar}%s{r_bar}" %
-                          (Fore.GREEN, Fore.RESET)):
-        try:
-            aud = preprocess(aud_fname)
-        except AssertionError as e:
-            print(e, "Couldn't process ", len(aud), aud_fname)
-            continue
-
-        # file_out_ = wav_fname.split('.')[0].replace(
-        #     RAW_DATA_DIR, INTERIM_DATA_DIR) + '_' + AUDIO_WRITE_FORMAT
-        # os.makedirs('/'.join(file_out_.split('/')[:-1]), exist_ok=True)
-        # soundfile.write(file_out_, aud, config['SAMPLING_RATE'])
-        # exit()
-
-        mel = mel_spectogram(aud)
-        if mel.shape[1] <= config['SLIDING_WIN_SIZE']:
-            print("Couldn't process ", mel.shape, aud_fname)
-            continue
-        c = aud_fname.split('/')[-3]
-        s = '_'.join(aud_fname.split('/')[-2:]).split('.')[0]
-        mels[c].append((s, mel))
-
-    write_hdf5(out_file, mels)
-
+    
 
 if __name__ == "__main__":
     structure(dirs_)
 
-    # download_pods(config['PODS_DATA_INFO'])
-    # extract_ads(config['PODS_DATA_INFO'], create_ads=True, create_non_ads=True)
+    download_pods(config['PODS_DATA_INFO'])
+    
+    extract_ads(config['PODS_DATA_INFO'], create_ads=True, create_non_ads=True)
 
     split_pods_train_test(ADS_DIR)
     split_pods_train_test(NON_ADS_DIR)
 
-    # preprocess_pods(PODS_DIR, ADS_OUT_FILE_TRAIN)

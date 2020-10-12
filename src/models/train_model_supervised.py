@@ -25,6 +25,19 @@ np.random.seed(42)
 
 
 class SUPERVISED_ADD(nn.Module):
+    """
+    ...
+
+    Attributes
+    ----------
+    ...
+
+    Methods
+    -------
+    ...
+
+    """
+
     def __init__(self,
                  input_shape=(251, 40),
                  load_model=False,
@@ -91,11 +104,8 @@ class SUPERVISED_ADD(nn.Module):
                 len(os.listdir(run_log_dir)) if os.path.exists(run_log_dir) else 0)))
 
     def forward(self, frames):
-        # print(frames.shape)
 
         o, (h, _) = self.lstm(frames)  # lstm out,hidden,
-        # print(x.shape)
-        # x = x[:, -1]  #last layer -> embeds
         x = torch.mean(o, dim=1)
 
         x = self.linear1(x)
@@ -124,9 +134,9 @@ class SUPERVISED_ADD(nn.Module):
                    cpt=0):
 
         train_iterator = torch.utils.data.DataLoader(self.dataset_train,
-                                                          batch_size=batch_size,
-                                                          shuffle=True,
-                                                          drop_last=True)
+                                                     batch_size=batch_size,
+                                                     shuffle=True,
+                                                     drop_last=True)
 
         self.val_iterator = torch.utils.data.DataLoader(self.dataset_val,
                                                         batch_size=batch_size,
@@ -141,7 +151,7 @@ class SUPERVISED_ADD(nn.Module):
                 data = data.view(
                     -1,
                     self.config['MEL_CHANNELS'],
-                    self.config['SLIDING_WIN_SIZE'],
+                    self.config['SLIDING_WIN_SIZE_SUPERVISED'],
                 ).transpose(1, 2)
                 opt.zero_grad()
 
@@ -161,10 +171,6 @@ class SUPERVISED_ADD(nn.Module):
             self.writer.add_scalar('Accuracy', self.accuracy(), epoch)
 
             if epoch % 2 == 0:
-                # self.writer.add_scalar('Loss', loss.data.item(), epoch)
-                # self.writer.add_scalar('Val Loss', self.val_loss(), epoch)
-                # self.writer.add_scalar('EER', self.eer(sim_matrix), epoch)
-                # self.writer.add_histogram('sim', sim_matrix, epoch)
 
                 torch.save(
                     {
@@ -181,7 +187,7 @@ class SUPERVISED_ADD(nn.Module):
             data = data.view(
                 -1,
                 self.config['MEL_CHANNELS'],
-                self.config['SLIDING_WIN_SIZE'],
+                self.config['SLIDING_WIN_SIZE_SUPERVISED'],
             ).transpose(1, 2)
             outs = self.forward(data)
             outs = torch.argmax(outs, 1)
@@ -199,7 +205,7 @@ class SUPERVISED_ADD(nn.Module):
                 datum = datum.view(
                     -1,
                     self.config['MEL_CHANNELS'],
-                    self.config['SLIDING_WIN_SIZE'],
+                    self.config['SLIDING_WIN_SIZE_SUPERVISED'],
                 ).transpose(1, 2)
                 outs = self.forward(datum)
 
@@ -227,7 +233,7 @@ class SUPERVISED_ADD(nn.Module):
             self.epoch, self.loss))
 
     def infer(self, fname, cpt=None):
-        aud = preprocess(fname)
+        aud = preprocess_aud(fname)
         embeds = self.embed(aud, group=True)
         return embeds
 
@@ -241,7 +247,7 @@ class SUPERVISED_ADD(nn.Module):
             data = data.view(
                 -1,
                 self.config['MEL_CHANNELS'],
-                self.config['SLIDING_WIN_SIZE'],
+                self.config['SLIDING_WIN_SIZE_SUPERVISED'],
             ).transpose(1, 2)
             outs = self.forward(data)
             outs = torch.argmax(outs, 1)
@@ -258,11 +264,10 @@ class SUPERVISED_ADD(nn.Module):
         plot_confusion_matrix(preds_dataset, labels_dataset,
                               label_names=['ads', 'non-ads'])
         acc = acc/ix
-        print("Accuracy: ",acc)
-        print("CM: ",cm)
-        print("F1: ",f1_score(labels_dataset,preds_dataset))
-        print("Accuracy: ",accuracy_score(labels_dataset,preds_dataset))
-        exit()
+        print("Accuracy: ", acc)
+        print("CM: ", cm)
+        print("F1: ", f1_score(labels_dataset, preds_dataset))
+        print("Accuracy: ", accuracy_score(labels_dataset, preds_dataset))
 
 
 if __name__ == "__main__":
@@ -323,7 +328,8 @@ if __name__ == "__main__":
                          cpt=cpt)
     elif args.mode == 'eval':
         model.val_iterator = torch.utils.data.DataLoader(model.dataset_val,
-                                                         batch_size=4*model.config['BATCH_SIZE'],
+                                                         batch_size=4 *
+                                                         model.config['BATCH_SIZE'],
                                                          shuffle=True,
                                                          drop_last=True)
         model.dataset_metrics()

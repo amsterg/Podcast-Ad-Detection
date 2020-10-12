@@ -21,6 +21,8 @@ import sys
 import os
 from sklearn.metrics import confusion_matrix
 from itertools import product
+import json
+import wget
 
 # nopep8
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -41,10 +43,10 @@ PODS_VAL_DIR: config['PODS_VAL_DIR']
 PODS_TEST_DIR: config['PODS_TEST_DIR']
 
 SAMPLING_RATE = config['SAMPLING_RATE']
-WINDOW_SIZE = config['WINDOW_SIZE']
-WINDOW_STEP = config['WINDOW_STEP']
-N_FFT = int(WINDOW_SIZE * SAMPLING_RATE / 1000)
-H_L = int(WINDOW_STEP * SAMPLING_RATE / 1000)
+WINDOW_SIZE_DIARIZATION = config['WINDOW_SIZE_DIARIZATION']
+WINDOW_STEP_DIARIZATION = config['WINDOW_STEP_DIARIZATION']
+N_FFT = int(WINDOW_SIZE_DIARIZATION * SAMPLING_RATE / 1000)
+H_L = int(WINDOW_STEP_DIARIZATION * SAMPLING_RATE / 1000)
 STEP_SIZE_EM = int((SAMPLING_RATE/16)/H_L)
 MEL_CHANNELS = config['MEL_CHANNELS']
 SMOOTHING_LENGTH = config['SMOOTHING_LENGTH']
@@ -55,7 +57,7 @@ SMOOTHING_WSIZE = int(SMOOTHING_WSIZE * SAMPLING_RATE / 1000)
 dirs_ = set([globals()[d] for d in globals() if d.__contains__('DIR')] +
             [config[d] for d in config if d.__contains__('DIR')])
 
-VAD = webrtcvad.Vad(mode=config['VAD_MODE'])
+VAD = webrtcvad.Vad(mode=config['VAD_MODE_DIARIZATION'])
 
 
 def structure(dirs=[]):
@@ -98,6 +100,25 @@ def normalization(aud, norm_type='peak'):
         raise AssertionError("Empty audio sig")
 
 
+def detect_voices(aud, sr=44100):
+    """
+    Summary:
+
+    Args:
+
+    Returns:
+
+    """
+    pcm_16 = np.round(
+        (np.iinfo(np.int16).max * aud)).astype(np.int16).tobytes()
+    voices = [
+        VAD.is_speech(pcm_16[2 * ix:2 * (ix + SMOOTHING_WSIZE)],
+                      sample_rate=SAMPLING_RATE)
+        for ix in range(0, len(aud), SMOOTHING_WSIZE)
+    ]
+    return voices
+
+
 def preprocess_aud(aud_input, sr=44100):
     """
     Summary:
@@ -125,22 +146,14 @@ def preprocess_aud(aud_input, sr=44100):
 
     assert len(aud) % SMOOTHING_WSIZE == 0, print(len(aud) % trim_len, aud)
 
-    pcm_16 = np.round(
-        (np.iinfo(np.int16).max * aud)).astype(np.int16).tobytes()
-    voices = [
-        VAD.is_speech(pcm_16[2 * ix:2 * (ix + SMOOTHING_WSIZE)],
-                      sample_rate=SAMPLING_RATE)
-        for ix in range(0, len(aud), SMOOTHING_WSIZE)
-    ]
-    # for i,v in enumerate(voices):
-    #     print(v)
-    #     exit()
-    #     if v:
-    #         continue
-    #     else:
-    #         voice_segments.append(i)
-    # voice_segments = np.where(np.diff(voices)!=0)[0]
-    # print(voice_segments)
+    # pcm_16 = np.round(
+    #     (np.iinfo(np.int16).max * aud)).astype(np.int16).tobytes()
+    # voices = [
+    #     VAD.is_speech(pcm_16[2 * ix:2 * (ix + SMOOTHING_WSIZE)],
+    #                   sample_rate=SAMPLING_RATE)
+    #     for ix in range(0, len(aud), SMOOTHING_WSIZE)
+    # ]
+    voices = detect_voices(aud, SAMPLING_RATE)
 
     smoothing_mask = np.repeat(
         binary_dilation(voices, np.ones(SMOOTHING_LENGTH)), SMOOTHING_WSIZE)
@@ -187,7 +200,7 @@ def split_audio_ixs(n_samples: int, rate=STEP_SIZE_EM, min_coverage=0.75):
     assert 0 < min_coverage <= 1
 
     # Compute how many frames separate two partial utterances
-    samples_per_frame = int((SAMPLING_RATE * WINDOW_STEP / 1000))
+    samples_per_frame = int((SAMPLING_RATE * WINDOW_STEP_DIARIZATION / 1000))
     n_frames = int(np.ceil((n_samples + 1) / samples_per_frame))
     frame_step = int(np.round((SAMPLING_RATE / rate) / samples_per_frame))
     assert 0 < frame_step, "The rate is too high"
@@ -245,6 +258,19 @@ def plot_confusion_matrix(preds, labels, label_names=None, normalize='true'):
 
 
 class AdPodTorchDataset(data.Dataset):
+    """
+    ...
+
+    Attributes
+    ----------
+    ...
+
+    Methods
+    -------
+    ...
+
+    """
+
     def __init__(self, pod_data, device=torch.device('cpu')):
         self.pod_data = pod_data
         self.categories = sorted(os.listdir(pod_data))
@@ -284,7 +310,68 @@ class AdPodTorchDataset(data.Dataset):
         return mel, label
 
 
+class AdPodFileTorchDataset(data.Dataset):
+    """
+    ...
+
+    Attributes
+    ----------
+    ...
+
+    Methods
+    -------
+    ...
+
+    """
+
+    def __init__(self, pod_data, device=torch.device('cpu')):
+        self.pod_data = pod_data
+        self.categories = sorted(os.listdir(pod_data))
+        with open(config['PODS_DATA_INFO'], 'r') as f:
+            self.pods_info = json.load(f)[::-1]
+        self.device = device
+        self.raw_dir = config['RAW_DATA_DIR']
+        with open('src/config.yaml', 'r') as f:
+            self.config = safe_load(f.read())
+
+    def __len__(self):
+
+        # return len([
+        #     e2 for e1 in os.listdir(self.pod_data) for e2 in os.listdir(os.path.join(self.pod_data,e1))
+        # ])
+        return len(os.listdir(self.config['PODS_DIR']))
+        return len(self.pods_info)
+
+    def _get_wav_file(self, ix):
+        print(ix)
+        pod = self.pods_info[ix]
+        pod_name = wget.filename_from_url(pod['content_url'])
+        # pod_name = 'a182f2b0-e229-4035-82cd-77a7447068f9_2.wav'
+        pod_name = os.path.join(self.config['PODS_DIR'], pod_name)
+
+        # pod_aud = load_audio(pod_name, self.config['SAMPLING_RATE'])
+        ads = len(pod['ads'])
+        return pod_name, ads
+
+    def __getitem__(self, ix=0):
+        pod_aud, ads = self._get_wav_file(ix)
+        return pod_aud, ads
+
+
 class HDF5TorchDataset(data.Dataset):
+    """
+    ...
+
+    Attributes
+    ----------
+    ...
+
+    Methods
+    -------
+    ...
+
+    """
+
     def __init__(self, accent_data, device=torch.device('cpu')):
         hdf5_file = os.path.join(PROC_DATA_DIR, '{}.hdf5'.format(accent_data))
         self.hdf5_file = h5py.File(hdf5_file, 'r')
@@ -312,9 +399,11 @@ class HDF5TorchDataset(data.Dataset):
         for wav in rand_wavs:
             wav_ = self.hdf5_file[rand_accent][wav]
 
-            rix = randint(0, wav_.shape[1] - self.config['SLIDING_WIN_SIZE'])
+            rix = randint(
+                0, wav_.shape[1] - self.config['SLIDING_WIN_SIZE_DIARAIZATION'])
 
-            ruttr = wav_[:, rix:rix + self.config['SLIDING_WIN_SIZE']]
+            ruttr = wav_[:, rix:rix +
+                         self.config['SLIDING_WIN_SIZE_DIARAIZATION']]
 
             ruttr = torch.Tensor(ruttr)
             rand_uttrs.append(ruttr)
@@ -329,6 +418,22 @@ class HDF5TorchDataset(data.Dataset):
 
     def collate(self, data):
         pass
+
+
+def load_audio(fname, sample_rate=None):
+    """
+    Summary:
+
+    Args:
+
+    Returns:
+
+    """
+    aud, sr = librosa.load(fname, sr=None)
+    if sample_rate is None:
+        sample_rate = config['SAMPLING_RATE']
+    aud, sr = preprocess_aud(aud, sr)
+    return aud
 
 
 def write_hdf5(out_file, data):
@@ -353,8 +458,11 @@ if __name__ == "__main__":
     adpd = AdPodTorchDataset(
         config['PODS_TRAIN_DIR']
     )
-    # adpd.__getitem__()
+    adpd = AdPodFileTorchDataset(
+        config['PODS_TRAIN_DIR']
+    )
     loader = data.DataLoader(adpd, 4)
     for y in loader:
-        print(y[0].shape)
-        print(y[1].shape)
+        print(y[0])
+        print(y[1])
+        break
