@@ -38,12 +38,14 @@ Project Organization
     │   ├── __init__.py    <- Makes src a Python module
     │   │
     │   ├── data           <- Scripts to download or generate data
-    │   │   └── data_create.py
+    │   │   ├── data_create.py
+    │   │   └── data_utils.py
     │   │
     │   │
-    │   ├── models         <- Scripts to train models and then use trained models to make
-    │   │   │                 predictions
+    │   ├── models         <- Scripts to train models and make predictions
     │   │   ├── predict_model.py
+    │   │   ├── diarize_and_cluster.py
+    │   │   ├── encoder.py
     │   │   └── train_model_supervised.py <- to train and eval the supervised ad detection model
     │   │
     │
