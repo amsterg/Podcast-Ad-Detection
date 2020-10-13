@@ -156,7 +156,6 @@ def metrics(model, data_iterator):
         print(data, "Created Clusters")
 
         ads = segment_ads(aud_data, aud_splits, data, clusters)
-        pred_ads_duration.append(len(ads)*10)
         ads_pred.append(len(ads))
         ads_actual.append(labels)
         print(data, "Done segmenting ads")
@@ -170,15 +169,9 @@ def metrics(model, data_iterator):
         plt.savefig(
             '{}/{}_hdb_labels.jpg'.format(config_yml['ADS_VIS_DIR'], data.split('/')[-1]))
         plt.close()
-        print("ads_pred ", ads_pred)
-        print("ads_actual ", ads_actual)
-        print("total_duration ", np.sum(total_duration))
-        print("pred_ads_duration ", np.sum(pred_ads_duration))
-        print("time diff ", (np.sum(total_duration)-np.sum(pred_ads_duration)
-                             )/np.sum(total_duration))
+       
         continue
-    with open(os.path.join(config_yml['ADS_VIS_DIR'], 'ad_count.json'), 'w') as f:
-        json.dump({"ads_pred": ads_pred, "ads_actual": ads_actual}, f)
+    
 
     
 
