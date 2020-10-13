@@ -41,7 +41,7 @@ with open('src/config.yaml', 'r') as f:
 
 def greedy_outliers(labels, percent=0.2):
     """
-    Summary:
+    Greedily select least occuring speakers
 
     Args:
 
@@ -62,7 +62,7 @@ def greedy_outliers(labels, percent=0.2):
 
 def get_cont_segs(labels):
     """
-    Summary:
+    Create contiguous segments of audio from labels
 
     Args:
 
@@ -89,7 +89,7 @@ def get_cont_segs(labels):
 
 def segment_ads(aud, aud_splits, fname, labels):
     """
-    Summary:
+    Extract ads from the audio with the provided labels
 
     Args:
 

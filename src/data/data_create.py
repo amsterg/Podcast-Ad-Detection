@@ -61,7 +61,7 @@ dirs_ = set([globals()[d] for d in globals() if d.__contains__('DIR')])
 
 def preprocess_TIMIT(data_root, out_file):
     """
-    Summary:
+    Preprocessing function for TIMIT dataset
 
     Args:
 
@@ -118,7 +118,7 @@ def preprocess_TIMIT(data_root, out_file):
 
 def extract_ad(pod_info, create_ads=False, create_non_ads=False):
     """
-    Summary:
+    extract ad from a given audio file based on timestamps 
 
     Args:
 
@@ -191,7 +191,7 @@ def extract_ad(pod_info, create_ads=False, create_non_ads=False):
 
 def extract_ads(pod_file, create_ads=False, create_non_ads=False):
     """
-    Summary:
+    Extract ads from selected files and respective timestamps
 
     Args:
 
@@ -217,7 +217,7 @@ def extract_ads(pod_file, create_ads=False, create_non_ads=False):
 
 def download_pod(pod_url):
     """
-    Summary:
+    Download a single pod based on pod_url
 
     Args:
 
@@ -236,7 +236,8 @@ def download_pod(pod_url):
 
 def download_pods(pod_file):
     """
-    Summary:
+    Download all the pods from the provided file
+
 
     Args:
 
@@ -257,7 +258,7 @@ def download_pods(pod_file):
 
 def greedy_file_select(aud_len, aud_files):
     """
-    Summary:
+    Select x number of files greedily till aud_len is satisfied
 
     Args:
 
@@ -283,7 +284,7 @@ def greedy_file_select(aud_len, aud_files):
 
 def link_files_raw_interim(src_files, data_cat, split):
     """
-    Summary:
+    Create soft links for interim files
 
     Args:
 
@@ -300,7 +301,7 @@ def link_files_raw_interim(src_files, data_cat, split):
 
 def split_pods_train_test(data_root):
     """
-    Summary:
+    Split the audio files into train,val,test sets
 
     Args:
 
@@ -363,7 +364,7 @@ def split_pods_train_test(data_root):
 
 def preprocess_pods(data_root, out_file):
     """
-    Summary:
+    Preprocess the pod files given a root directory file
 
     Args:
 
@@ -382,7 +383,7 @@ if __name__ == "__main__":
     structure(dirs_)
 
     download_pods(config['PODS_DATA_INFO'])
-    
+
     extract_ads(config['PODS_DATA_INFO'], create_ads=True, create_non_ads=True)
 
     split_pods_train_test(ADS_DIR)

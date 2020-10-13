@@ -62,7 +62,7 @@ VAD = webrtcvad.Vad(mode=config['VAD_MODE_DIARIZATION'])
 
 def structure(dirs=[]):
     """
-    Summary:
+    Create necessary directory structure
 
     Args:
 
@@ -77,7 +77,7 @@ def structure(dirs=[]):
 
 def normalization(aud, norm_type='peak'):
     """
-    Summary:
+    Normalize the given audio clip
 
     Args:
 
@@ -102,7 +102,7 @@ def normalization(aud, norm_type='peak'):
 
 def detect_voices(aud, sr=44100):
     """
-    Summary:
+    Detect the presence and absence of voices in an array of audio 
 
     Args:
 
@@ -121,7 +121,7 @@ def detect_voices(aud, sr=44100):
 
 def preprocess_aud(aud_input, sr=44100):
     """
-    Summary:
+    Preprocess and return the provided audio
 
     Args:
 
@@ -172,7 +172,7 @@ def preprocess_aud(aud_input, sr=44100):
 
 def mel_spectogram(aud):
     """
-    Summary:
+    Create a mel-spectogram of the given audio
 
     Args:
 
@@ -188,9 +188,9 @@ def mel_spectogram(aud):
     return mel
 
 
-def split_audio_ixs(n_samples: int, rate=STEP_SIZE_EM, min_coverage=0.75):
+def split_audio_ixs(n_samples, rate=STEP_SIZE_EM, min_coverage=0.75):
     """
-    Summary:
+    Create audio,mel slice indices for the audio clip 
 
     Args:
 
@@ -259,7 +259,7 @@ def plot_confusion_matrix(preds, labels, label_names=None, normalize='true'):
 
 class AdPodTorchDataset(data.Dataset):
     """
-    ...
+    Class for creating an Torch dataset based with random aud extraction and mel conversion on fly
 
     Attributes
     ----------
@@ -312,7 +312,8 @@ class AdPodTorchDataset(data.Dataset):
 
 class AdPodFileTorchDataset(data.Dataset):
     """
-    ...
+    Class for creating an Torch dataset based with random pod file selection
+
 
     Attributes
     ----------
@@ -360,7 +361,8 @@ class AdPodFileTorchDataset(data.Dataset):
 
 class HDF5TorchDataset(data.Dataset):
     """
-    ...
+    Class for creating an Torch dataset based with random mel selection form HDF5 file
+
 
     Attributes
     ----------
@@ -422,7 +424,7 @@ class HDF5TorchDataset(data.Dataset):
 
 def load_audio(fname, sample_rate=None):
     """
-    Summary:
+    Load any give audio
 
     Args:
 
@@ -438,7 +440,7 @@ def load_audio(fname, sample_rate=None):
 
 def write_hdf5(out_file, data):
     """
-    Summary:
+   Write the provieded dict to hdf5 file
 
     Args:
 

@@ -26,7 +26,7 @@ np.random.seed(42)
 
 class SUPERVISED_ADD(nn.Module):
     """
-    ...
+    supervised ad/non-ad classification model
 
     Attributes
     ----------

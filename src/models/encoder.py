@@ -23,7 +23,7 @@ np.random.seed(42)
 
 class DIARIZE_ENCODER(nn.Module):
     """
-    ...
+    Enocder for creating embeddings of any given audio clip, for both training and inference
 
     Attributes
     ----------
