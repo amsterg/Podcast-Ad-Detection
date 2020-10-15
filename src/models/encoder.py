@@ -17,7 +17,7 @@ import sys
 # from src.data.data_utils import ImbalancedDatasetSampler
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(os.getcwd())
-from data_utils import H_L, STEP_SIZE_EM, split_audio_ixs, mel_spectogram, preprocess_aud, HDF5TorchDataset  # noqa
+from src.data.data_utils import H_L, STEP_SIZE_EM, split_audio_ixs, mel_spectogram, preprocess_aud, HDF5TorchDataset  # noqa
 np.random.seed(42)
 
 
