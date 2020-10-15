@@ -172,15 +172,9 @@ def metrics(model, data_iterator):
         plt.savefig(
             '{}/{}_hdb_labels.jpg'.format(ad_dir, data.split('/')[-1]))
         plt.close()
-        print("ads_pred ", ads_pred)
-        print("ads_actual ", ads_actual)
-        print("total_duration ", np.sum(total_duration))
-        print("pred_ads_duration ", np.sum(pred_ads_duration))
-        print("time diff ", (np.sum(total_duration)-np.sum(pred_ads_duration)
-                             )/np.sum(total_duration))
+       
         continue
-    with open(os.path.join(config_yml['ADS_VIS_DIR'], 'ad_count.json'), 'w') as f:
-        json.dump({"ads_pred": ads_pred, "ads_actual": ads_actual}, f)
+    
 
 
 if __name__ == "__main__":
