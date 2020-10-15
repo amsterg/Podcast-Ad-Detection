@@ -1,7 +1,6 @@
-ad_finder
+Podcast Ad Finder
 ==============================
 
-# Podcast Ad Finder
 #### A way to detect and extract ads from any given podcast audio feed
 
 ## Table of Contents
