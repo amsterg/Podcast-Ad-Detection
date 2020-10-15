@@ -9,7 +9,6 @@ Podcast Ad Finder
 * [Installation](#Installation)
 * [Create Data](#Create-Data)
 * [Usage](#Usage)
-* Usage
 
 
 
