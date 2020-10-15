@@ -97,6 +97,8 @@ def segment_ads(aud, aud_splits, fname, labels):
 
     """
     fname_rel = fname.split('/')[-1].split('.')[0]
+    fname_dir = os.path.join(config_yml['ADS_VIS_DIR'], fname_rel)
+    os.makedirs(fname_dir, exist_ok=True)
     ads = []
     labels = [mode(labels[i:i+10], axis=None).mode[0]
               for i in range(0, len(labels), 1)]
@@ -107,7 +109,7 @@ def segment_ads(aud, aud_splits, fname, labels):
 
     assert len(cont_segs) == len(cont_segs_labels)
 
-    with open(os.path.join(config_yml['ADS_VIS_DIR'], '{}_{}.json'.format(fname_rel, "cont_segs")), 'w') as f:
+    with open(os.path.join(fname_dir, '{}_{}.json'.format(fname_rel, "cont_segs")), 'w') as f:
         json.dump(cont_segs, f)
 
     for i, seg in enumerate(cont_segs):
@@ -117,9 +119,9 @@ def segment_ads(aud, aud_splits, fname, labels):
             ads.append(
                 ('{}_{}.wav'.format(fname_rel, i).format(i), aud_slice)
             )
-            # soundfile.write(
-            #     '{}/{}_{}.wav'.format(config_yml['ADS_VIS_DIR'], fname_rel, i), aud_slice, config_yml['SAMPLING_RATE'], format='WAV')
-    return ads
+            soundfile.write(
+                '{}/{}_{}.wav'.format(fname_dir, fname_rel, i), aud_slice, config_yml['SAMPLING_RATE'], format='WAV')
+    return fname_dir,ads
 
 
 def metrics(model, data_iterator):
@@ -133,8 +135,8 @@ def metrics(model, data_iterator):
     """
     umap_proj = UMAP(metric='euclidean', n_neighbors=200, low_memory=True)
     hdb_clusterer = hdbscan.HDBSCAN(
-        min_samples=10,
-        min_cluster_size=2,
+        min_samples=100,
+        min_cluster_size=100,
     )
     ads_pred = []
     ads_actual = []
@@ -144,7 +146,7 @@ def metrics(model, data_iterator):
         aud_len = MP3_META(data).info.length
         total_duration.append(aud_len)
         aud_data = load_audio(data)
-        embeds, (aud_splits, _ ) = encoder.embed(aud_data, group=False)
+        embeds, (aud_splits, _) = encoder.embed(aud_data, group=False)
         print(data, "Embed done")
         try:
             projs = umap_proj.fit_transform(embeds)
@@ -155,7 +157,7 @@ def metrics(model, data_iterator):
         clusters = hdb_clusterer.fit_predict(projs)
         print(data, "Created Clusters")
 
-        ads = segment_ads(aud_data, aud_splits, data, clusters)
+        ad_dir,ads = segment_ads(aud_data, aud_splits, data, clusters)
         pred_ads_duration.append(len(ads)*10)
         ads_pred.append(len(ads))
         ads_actual.append(labels)
@@ -164,11 +166,11 @@ def metrics(model, data_iterator):
         plt.scatter(projs[:, 0], projs[:, 1], cmap='Spectral')
         plt.title(str(Counter(clusters)))
         plt.savefig(
-            '{}/{}_umap.jpg'.format(config_yml['ADS_VIS_DIR'], data.split('/')[-1]))
+            '{}/{}_umap.jpg'.format(ad_dir, data.split('/')[-1]))
         plt.close()
         plt.plot(clusters)
         plt.savefig(
-            '{}/{}_hdb_labels.jpg'.format(config_yml['ADS_VIS_DIR'], data.split('/')[-1]))
+            '{}/{}_hdb_labels.jpg'.format(ad_dir, data.split('/')[-1]))
         plt.close()
         print("ads_pred ", ads_pred)
         print("ads_actual ", ads_actual)
@@ -179,9 +181,6 @@ def metrics(model, data_iterator):
         continue
     with open(os.path.join(config_yml['ADS_VIS_DIR'], 'ad_count.json'), 'w') as f:
         json.dump({"ads_pred": ads_pred, "ads_actual": ads_actual}, f)
-
-    
-
 
 
 if __name__ == "__main__":
