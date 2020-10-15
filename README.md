@@ -7,10 +7,8 @@ Podcast Ad Finder
 
 * [Project Organization](#Project-Organization)
 * [Installation](#Installation)
-* [Create Data](#Create Data)
-* [Project Organization](#Project-Organization)
-* Installation
-* Create Data
+* [Create Data](#Create-Data)
+* [Usage](#Usage)
 * Usage
 
 
