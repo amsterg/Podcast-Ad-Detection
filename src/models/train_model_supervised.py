@@ -148,6 +148,7 @@ class SUPERVISED_ADD(nn.Module):
 
         for epoch in range(self.epoch, 20000):
             for i, (data, labels) in enumerate(train_iterator):
+                print(data.shape)
                 data = data.view(
                     -1,
                     self.config['MEL_CHANNELS'],

@@ -111,7 +111,7 @@ class DIARIZE_ENCODER(nn.Module):
 
     def loss_fn(self, loss_, embeds, labels):
 
-        lang_count = int(self.config_yml['BATCH_SIZE'] /
+        lang_count = int(self.config_yml['BATCH_SIZE_DIARAIZATION'] /
                          self.config_yml['UTTR_COUNT'])
         embeds3d = embeds.view(lang_count, self.config_yml['UTTR_COUNT'], -1)
         dcl = self.direct_classification_loss(embeds, labels)
@@ -138,7 +138,7 @@ class DIARIZE_ENCODER(nn.Module):
         sim_matrix = (self.similarity_weight * cosim_matrix) + \
             self.similarity_bias
 
-        sim_matrix = sim_matrix.view(self.config_yml['BATCH_SIZE'], -1)
+        sim_matrix = sim_matrix.view(self.config_yml['BATCH_SIZE_DIARAIZATION'], -1)
         targets = torch.range(
             0, self.config_yml['ACC_COUNT'] - 1).repeat_interleave(
                 self.config_yml['UTTR_COUNT']).long().to(device=self.device)
