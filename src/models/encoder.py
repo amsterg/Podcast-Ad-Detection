@@ -338,10 +338,10 @@ if __name__ == "__main__":
                         choices=['cpu', 'cuda'])
     parser.add_argument("--dataset_train",
                         help="path to train_dataset",
-                        required=False, default='')
+                        required=False, default='timit_4_train')
     parser.add_argument("--dataset_val",
                         help="path to val_dataset",
-                        required=False, default='')
+                        required=False, default='timit_4_train')
     parser.add_argument("--mode",
                         help="train or eval",
                         required=True,
