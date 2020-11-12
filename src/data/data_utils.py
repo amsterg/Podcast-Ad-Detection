@@ -157,7 +157,7 @@ def preprocess_aud(aud_input, sr=44100):
 
     smoothing_mask = np.repeat(
         binary_dilation(voices, np.ones(SMOOTHING_LENGTH)), SMOOTHING_WSIZE)
-    print(len(smoothing_mask))
+    # print(len(smoothing_mask))
     aud = aud[smoothing_mask]
 
     try:
@@ -448,12 +448,18 @@ def write_hdf5(out_file, data):
 
     """
     gmu_proc_file = h5py.File(out_file, 'w')
+    print(gmu_proc_file)
     for g in data:
         group = gmu_proc_file.create_group(g)
         for datum in data[g]:
-            group.create_dataset("mel_spects_{}".format(datum[0]),
-                                 data=datum[1])
+            try:
+                group.create_dataset("mel_spects_{}".format(datum[0]),
+                                     data=datum[1])
+            except Exception as e:
+                print(group.name, datum[0], e)
+
     gmu_proc_file.close()
+    exit()
 
 
 if __name__ == "__main__":

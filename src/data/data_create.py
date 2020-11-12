@@ -42,6 +42,7 @@ MODEL_SAVE_DIR = config['MODEL_SAVE_DIR']
 AUDIO_WRITE_FORMAT = config['AUDIO_WRITE_FORMAT']
 AUDIO_READ_FORMAT_PODS = config['AUDIO_READ_FORMAT_PODS']
 PODS_READ_FORMAT_PODS = config['PODS_READ_FORMAT_PODS']
+ACC_COUNT = config['ACC_COUNT']
 
 PODS_DIR = config['PODS_DIR']
 ADS_DIR = config['ADS_DIR']
@@ -54,9 +55,12 @@ PODS_TEST_DIR: config['PODS_TEST_DIR']
 ADS_OUT_FILE_TRAIN = os.path.join(
     PROC_DATA_DIR, 'ads_train.hdf5')
 
+TIMIT_PROC_OUT_FILE_TRAIN = os.path.join(
+    PROC_DATA_DIR, 'timit_{}_train.hdf5'.format(ACC_COUNT))
+TIMIT_PROC_OUT_FILE_TEST = os.path.join(
+    PROC_DATA_DIR, 'timit_{}_test.hdf5'.format(ACC_COUNT))
 
 dirs_ = set([globals()[d] for d in globals() if d.__contains__('DIR')])
-
 
 
 def preprocess_TIMIT(data_root, out_file):
@@ -95,7 +99,7 @@ def preprocess_TIMIT(data_root, out_file):
                           bar_format="{l_bar}%s{bar}%s{r_bar}" %
                           (Fore.GREEN, Fore.RESET)):
         try:
-            aud = preprocess(wav_fname)
+            aud, sr = preprocess_aud(wav_fname)
         except AssertionError as e:
             print(e, "Couldn't process ", len(aud), wav_fname)
             continue
@@ -118,7 +122,7 @@ def preprocess_TIMIT(data_root, out_file):
 
 def extract_ad(pod_info, create_ads=False, create_non_ads=False):
     """
-    extract ad from a given audio file based on timestamps 
+    extract ad from a given audio file based on timestamps
 
     Args:
 
@@ -202,7 +206,6 @@ def extract_ads(pod_file, create_ads=False, create_non_ads=False):
 
     with open(pod_file, 'r') as f:
         podcasts_json = json.load(f)
-
 
     proc_args = {
         'pod_file': podcasts_json,
@@ -377,15 +380,23 @@ def preprocess_pods(data_root, out_file):
         for s in os.listdir(data_root)
         if s.__contains__(config['AUDIO_READ_FORMAT_PODS'])
     ]
-    
+
 
 if __name__ == "__main__":
     structure(dirs_)
 
-    download_pods(config['PODS_DATA_INFO'])
+    ###### data creation for TIMIT,diarization encoder
+    
+    preprocess_TIMIT(config['TIMIT_DATA_TRAIN'],
+                     out_file=TIMIT_PROC_OUT_FILE_TRAIN)
+    preprocess_TIMIT(config['TIMIT_DATA_TEST'],
+                     out_file=TIMIT_PROC_OUT_FILE_TEST)
 
-    extract_ads(config['PODS_DATA_INFO'], create_ads=True, create_non_ads=True)
+    ###### data creation for pods
 
-    split_pods_train_test(ADS_DIR)
-    split_pods_train_test(NON_ADS_DIR)
+    # download_pods(config['PODS_DATA_INFO'])
 
+    # extract_ads(config['PODS_DATA_INFO'], create_ads=True, create_non_ads=True)
+
+    # split_pods_train_test(ADS_DIR)
+    # split_pods_train_test(NON_ADS_DIR)

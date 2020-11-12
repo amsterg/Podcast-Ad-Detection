@@ -39,6 +39,8 @@ class DIARIZE_ENCODER(nn.Module):
                  input_shape=(160, 40),
                  load_model=False,
                  epoch=0,
+                 dataset_train='',
+                 dataset_val='',
                  device=torch.device('cpu'),
                  loss_=None, mode='train'):
         super(DIARIZE_ENCODER, self).__init__()
@@ -46,14 +48,30 @@ class DIARIZE_ENCODER(nn.Module):
         with open('src/config.yaml', 'r') as f:
             self.config_yml = safe_load(f.read())
 
-        self.model_save_string = os.path.join(
-            self.__class__.__name__ + '_Epoch_{}.pt')
-        model_log_dir = self.config_yml['MODEL_SAVE_DIR']
-        model_save_dir = os.path.join(
-            model_log_dir, self.__class__.__name__)
+        model_save_dir = os.path.join(self.config_yml['MODEL_SAVE_DIR'],
+                                      dataset_train)
+        if not os.path.exists(model_save_dir):
+            os.makedirs(model_save_dir)
+
         self.model_save_string = os.path.join(
             model_save_dir, self.__class__.__name__ + '_Epoch_{}.pt')
+
+        log_dir = os.path.join(
+            self.config_yml['RUNS_DIR'],
+            '{}_{}'.format(dataset_train, self.__class__.__name__))
+        self.writer = SummaryWriter(log_dir=os.path.join(
+            log_dir, "run_{}".format(
+                len(os.listdir(log_dir)) if os.path.exists(log_dir) else 0)))
+
         self.device = device
+
+        if mode == 'train':
+            self.dataset_train = HDF5TorchDataset(dataset_train, device=device)
+            if dataset_val == '':
+                self.dataset_val = self.dataset_train
+            else:
+                self.dataset_val = HDF5TorchDataset(
+                    args.dataset_val, device=device)
 
         self.lstm = nn.LSTM(self.config_yml['MEL_CHANNELS'],
                             self.config_yml['HIDDEN_SIZE'],
@@ -117,7 +135,8 @@ class DIARIZE_ENCODER(nn.Module):
 
         cosim_matrix[neg_ix, :, neg_ix] = cosim_neg
 
-        sim_matrix = (self.W * cosim_matrix) + self.b
+        sim_matrix = (self.similarity_weight * cosim_matrix) + \
+            self.similarity_bias
 
         sim_matrix = sim_matrix.view(self.config_yml['BATCH_SIZE'], -1)
         targets = torch.range(
@@ -343,10 +362,13 @@ if __name__ == "__main__":
 
     device = torch.device(args.device)
     loss_ = torch.nn.CrossEntropyLoss(reduction='sum')
-    encoder = DIARIZE_ENCODER(device=device,
+    encoder = DIARIZE_ENCODER(dataset_train=args.dataset_train,
+                              dataset_val=args.dataset_val,
+                              device=device,
                               loss_=loss_,
                               load_model=args.load_model, mode=args.mode).to(device=device)
     optimizer = torch.optim.SGD(encoder.parameters(), lr=1e-2)
+
     encoder.opt = optimizer
     cpt = args.cpt
     if args.load_model:
@@ -369,8 +391,8 @@ if __name__ == "__main__":
 
         sim_matrix = encoder.sim_matrix_infer(fnames, cpt)
     elif args.mode == 'eval':
-        aud1 = preprocess('auds/en2.wav')
-        aud2 = preprocess('auds/en1.wav')
+        aud1 = preprocess_aud('auds/en2.wav')
+        aud2 = preprocess_aud('auds/en1.wav')
         embed1 = encoder.embed(aud1, group=True)
         embed2 = encoder.embed(aud2, group=True)
 
